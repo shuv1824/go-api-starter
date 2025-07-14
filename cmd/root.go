@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shuv1824/go-api-starter/internal/config"
+	"github.com/shuv1824/go-api-starter/pkg/database"
 	"github.com/spf13/cobra"
 )
 
@@ -28,19 +30,24 @@ func Execute() {
 func rootRun(cmd *cobra.Command, args []string) {
 	// ctx := context.Background()
 
-	cfg, err := InitConfig("./config.yaml")
+	cfg, err := config.InitConfig("./config.yaml")
 	if err != nil {
 		log.Fatalf("failed to initialize config: %v\n", err)
 	}
 
 	level := slog.LevelInfo
-	if cfg.Mode == modeTypeDebug {
+	if cfg.Mode == config.ModeTypeDebug {
 		level = slog.LevelDebug
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: level,
 	}))
+
+	_, err = database.NewPostgresDB(&cfg.Database)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v\n", err)
+	}
 
 	router := gin.Default()
 
@@ -50,7 +57,7 @@ func rootRun(cmd *cobra.Command, args []string) {
 		})
 	})
 
-	err = router.Run(fmt.Sprintf(":%d", 8000))
+	err = router.Run(fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		log.Fatalf("error starting api: %v\n", err)
 	}

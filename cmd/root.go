@@ -3,11 +3,11 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shuv1824/go-api-starter/internal/common/middleware"
 	"github.com/shuv1824/go-api-starter/internal/config"
 	"github.com/shuv1824/go-api-starter/pkg/database"
 	"github.com/spf13/cobra"
@@ -28,21 +28,21 @@ func Execute() {
 }
 
 func rootRun(cmd *cobra.Command, args []string) {
-	// ctx := context.Background()
-
 	cfg, err := config.InitConfig("./config.yaml")
 	if err != nil {
 		log.Fatalf("failed to initialize config: %v\n", err)
 	}
 
-	level := slog.LevelInfo
-	if cfg.Mode == config.ModeTypeDebug {
-		level = slog.LevelDebug
-	}
+	gin.SetMode(string(cfg.Mode))
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: level,
-	}))
+	// level := slog.LevelInfo
+	// if cfg.Mode == config.ModeTypeDebug {
+	// 	level = slog.LevelDebug
+	// }
+	//
+	// logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	// 	Level: level,
+	// }))
 
 	_, err = database.NewPostgresDB(&cfg.Database)
 	if err != nil {
@@ -50,6 +50,11 @@ func rootRun(cmd *cobra.Command, args []string) {
 	}
 
 	router := gin.Default()
+
+	// Add middleware
+	router.Use(middleware.CORSMiddleware())
+	router.Use(middleware.LoggingMiddleware())
+	router.Use(gin.Recovery())
 
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -61,6 +66,4 @@ func rootRun(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("error starting api: %v\n", err)
 	}
-
-	logger.Info("server started", "port", 8000)
 }

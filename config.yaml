@@ -2,6 +2,7 @@ mode: debug
 port: 8080
 
 database:
+  type: postgres
   host: localhost
   port: 5432
   username: postgres

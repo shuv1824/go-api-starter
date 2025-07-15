@@ -10,22 +10,37 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func NewPostgresDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
+type PostgresDB struct{}
+
+func (p *PostgresDB) Connect(cfg *config.DatabaseConfig) (*gorm.DB, error) {
+	dialector := p.GetDialector(cfg)
+	db, err := gorm.Open(dialector, &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
+	}
+
+	if err := p.testConnection(db); err != nil {
+		return nil, err
+	}
+
+	slog.Info("successfully connected to PostgreSQL database")
+	return db, nil
+}
+
+func (p *PostgresDB) GetDialector(cfg *config.DatabaseConfig) gorm.Dialector {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=UTC",
 		cfg.Host, cfg.Username, cfg.Password, cfg.DbName, cfg.Port, cfg.SSLMode,
 	)
+	return postgres.Open(dsn)
+}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
+func (p *PostgresDB) testConnection(db *gorm.DB) error {
 	sqlDB, err := db.DB()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get database instance: %w", err)
+		return fmt.Errorf("failed to get database instance: %w", err)
 	}
 
 	// Configure connection pool
@@ -35,9 +50,14 @@ func NewPostgresDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 
 	// Test connection
 	if err := sqlDB.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	slog.Info("successfully connected to PostgreSQL database")
-	return db, nil
+	return nil
+}
+
+// Legacy function for backward compatibility
+func NewPostgresDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
+	p := &PostgresDB{}
+	return p.Connect(cfg)
 }

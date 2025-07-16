@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shuv1824/go-api-starter/internal/common/middleware"
 	"github.com/shuv1824/go-api-starter/internal/config"
+	"github.com/shuv1824/go-api-starter/internal/migration"
 	"github.com/shuv1824/go-api-starter/pkg/database"
 	"github.com/spf13/cobra"
 )
@@ -44,9 +45,14 @@ func rootRun(cmd *cobra.Command, args []string) {
 	// 	Level: level,
 	// }))
 
-	_, err = database.NewPostgresDB(&cfg.Database)
+	db, err := database.NewDatabase(&cfg.Database)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v\n", err)
+	}
+
+	err = migration.MigrateUp(db, cfg.Database.Type)
+	if err != nil {
+		log.Fatalf("database migration error: %v\n", err)
 	}
 
 	router := gin.Default()

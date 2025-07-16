@@ -55,9 +55,3 @@ func (p *PostgresDB) testConnection(db *gorm.DB) error {
 
 	return nil
 }
-
-// Legacy function for backward compatibility
-func NewPostgresDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
-	p := &PostgresDB{}
-	return p.Connect(cfg)
-}

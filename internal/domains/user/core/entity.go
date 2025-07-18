@@ -18,14 +18,14 @@ type User struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
+type UpdateUserRequest struct {
+	Name string `json:"name"`
+}
+
 type CreateUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 	Name     string `json:"name" binding:"required"`
-}
-
-type UpdateUserRequest struct {
-	Name string `json:"name"`
 }
 
 type LoginRequest struct {

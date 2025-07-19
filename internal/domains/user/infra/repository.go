@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	apperrors "github.com/shuv1824/go-api-starter/internal/common/errors"
 	"github.com/shuv1824/go-api-starter/internal/domains/user/core"
 	"gorm.io/gorm"
@@ -13,7 +14,7 @@ type UserRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository {
+func NewRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
@@ -21,7 +22,7 @@ func (r *UserRepository) Create(ctx context.Context, user *core.User) error {
 	return r.db.WithContext(ctx).Create(user).Error
 }
 
-func (r *UserRepository) GetByID(ctx context.Context, id string) (*core.User, error) {
+func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*core.User, error) {
 	var user core.User
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
 	if err != nil {
@@ -49,7 +50,7 @@ func (r *UserRepository) Update(ctx context.Context, user *core.User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
-func (r *UserRepository) Delete(ctx context.Context, id string) error {
+func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&core.User{}, "id = ?", id).Error
 }
 

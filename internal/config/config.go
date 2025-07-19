@@ -27,6 +27,7 @@ type DatabaseConfig struct {
 type Config struct {
 	Mode     ModeType       `yaml:"mode"`
 	Port     int            `yaml:"port"`
+	Secret   string         `yaml:"secret"`
 	Database DatabaseConfig `yaml:"database"`
 }
 

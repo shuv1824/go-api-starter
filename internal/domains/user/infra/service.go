@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/shuv1824/go-api-starter/internal/common/auth"
 	"github.com/shuv1824/go-api-starter/internal/domains/user/core"
 	"golang.org/x/crypto/bcrypt"
@@ -16,7 +17,7 @@ type service struct {
 	jwtService *auth.Service
 }
 
-func New(repo core.UserRepository, jwtService *auth.Service) *service {
+func NewService(repo core.UserRepository, jwtService *auth.Service) *service {
 	return &service{
 		repo:       repo,
 		jwtService: jwtService,
@@ -39,8 +40,11 @@ func (s *service) Register(ctx context.Context, req core.CreateUserRequest) (*co
 		return nil, err
 	}
 
+	id := uuid.New()
+
 	// Create user
 	user := &core.User{
+		ID:       id,
 		Email:    req.Email,
 		Password: string(hashedPassword),
 		Name:     req.Name,

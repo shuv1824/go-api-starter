@@ -20,7 +20,7 @@ type Service struct {
 	refreshDuration time.Duration
 }
 
-func New(secretKey string, tokenDuration, refreshDuration time.Duration) *Service {
+func NewService(secretKey string, tokenDuration, refreshDuration time.Duration) *Service {
 	return &Service{
 		secretKey:       []byte(secretKey),
 		tokenDuration:   tokenDuration,

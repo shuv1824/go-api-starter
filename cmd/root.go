@@ -5,10 +5,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shuv1824/go-api-starter/internal/common/auth"
 	"github.com/shuv1824/go-api-starter/internal/common/middleware"
 	"github.com/shuv1824/go-api-starter/internal/config"
+	userHandlers "github.com/shuv1824/go-api-starter/internal/domains/user/handlers"
+	userDomain "github.com/shuv1824/go-api-starter/internal/domains/user/infra"
 	"github.com/shuv1824/go-api-starter/internal/migration"
 	"github.com/shuv1824/go-api-starter/pkg/database"
 	"github.com/spf13/cobra"
@@ -55,6 +59,12 @@ func rootRun(cmd *cobra.Command, args []string) {
 		log.Fatalf("database migration error: %v\n", err)
 	}
 
+	// Initialize services
+	jwtService := auth.NewService(cfg.Secret, time.Minute*30, time.Minute*60)
+	userRepo := userDomain.NewRepository(db)
+	userService := userDomain.NewService(userRepo, jwtService)
+	userHandlers := userHandlers.NewHandler(userService)
+
 	router := gin.Default()
 
 	// Add middleware
@@ -62,11 +72,19 @@ func rootRun(cmd *cobra.Command, args []string) {
 	router.Use(middleware.LoggingMiddleware())
 	router.Use(gin.Recovery())
 
+	// Healthcheck
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
 		})
 	})
+
+	// Public routes
+	auth := router.Group("/api/v1/auth")
+	{
+		auth.POST("/register", userHandlers.Register)
+		auth.POST("/login", userHandlers.Login)
+	}
 
 	err = router.Run(fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {

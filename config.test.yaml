@@ -1,0 +1,11 @@
+mode: test
+port: 8081
+secret: test-secret-key
+database:
+  type: postgres
+  host: localhost
+  port: 5432
+  username: postgres
+  password: 123456
+  dbname: gostarter_test
+  sslmode: disable

@@ -96,3 +96,7 @@ func (s *service) Login(ctx context.Context, req core.LoginRequest) (*core.AuthR
 		User:  *user,
 	}, nil
 }
+
+func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*core.User, error) {
+	return s.repo.GetByID(ctx, id)
+}

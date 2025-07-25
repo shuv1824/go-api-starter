@@ -31,7 +31,7 @@ func AuthMiddleware(jwtService *auth.Service) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user", claims)
+		c.Set("claims", claims)
 		c.Next()
 	}
 }

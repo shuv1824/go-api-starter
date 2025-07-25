@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/shuv1824/go-api-starter/internal/common/auth"
 	"github.com/shuv1824/go-api-starter/internal/common/errors"
 	"github.com/shuv1824/go-api-starter/internal/domains/user/core"
 )
@@ -48,6 +50,30 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) GetProfile(c *gin.Context) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	currentUser := claims.(*auth.Claims)
+
+	userId, err := uuid.Parse(currentUser.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failded to parse user id"})
+		return
+	}
+
+	user, err := h.userService.GetByID(c.Request.Context(), userId)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }
 
 func (h *Handler) handleError(c *gin.Context, err error) {

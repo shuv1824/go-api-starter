@@ -60,7 +60,7 @@ func rootRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Initialize services
-	jwtService := auth.NewService(cfg.Secret, time.Minute*30, time.Minute*60)
+	jwtService := auth.NewService(cfg.Secret, time.Hour, time.Hour*24)
 	userRepo := userDomain.NewRepository(db)
 	userService := userDomain.NewService(userRepo, jwtService)
 	userHandlers := userHandlers.NewHandler(userService)
@@ -84,6 +84,13 @@ func rootRun(cmd *cobra.Command, args []string) {
 	{
 		auth.POST("/register", userHandlers.Register)
 		auth.POST("/login", userHandlers.Login)
+	}
+
+	// Authenticated routes
+	authenticated := router.Group("/api/v1")
+	{
+		authenticated.Use(middleware.AuthMiddleware(jwtService))
+		authenticated.GET("/profile", userHandlers.GetProfile)
 	}
 
 	err = router.Run(fmt.Sprintf(":%d", cfg.Port))
